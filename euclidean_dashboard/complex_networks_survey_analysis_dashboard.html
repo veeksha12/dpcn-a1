@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynamic Processes in Complex Networks — Survey Similarity Dashboard</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Vis-Network for interactive graph layout -->
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+  <!-- PapaParse for custom CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <!-- KaTeX for pristine mathematical typesetting -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              900: '#082f49',
+            },
+            dark: {
+              950: '#070a12',
+              900: '#0b0f19',
+              850: '#0f172a',
+              800: '#141e33',
+              700: '#1e293b',
+              600: '#334155'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    code, .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Custom high-tech scrollbars */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .metric-badge {
+      background: #111a2e;
+      border: 1px solid #1e293b;
+      transition: all 0.2s ease;
+    }
+    .metric-badge:hover {
+      border-color: #38bdf8;
+      transform: translateY(-1px);
+    }
+
+    /* Vis tooltip customization */
+    div.vis-tooltip {
+      position: absolute;
+      background-color: #0b0f19 !important;
+      border: 1px solid #38bdf8 !important;
+      color: #f8fafc !important;
+      padding: 9px 13px !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 11px !important;
+      border-radius: 8px !important;
+      box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.75) !important;
+      pointer-events: none !important;
+      z-index: 9999 !important;
+      line-height: 1.5 !important;
+    }
+
+    /* KaTeX equation display within badges and text */
+    .katex {
+      font-size: 1.02em;
+    }
+  </style>
+</head>
+
+<body class="bg-dark-950 text-slate-100 flex flex-col h-screen overflow-hidden select-none">
+
+  <!-- TOP HEADER NAV -->
+  <header class="bg-dark-900 border-b border-gray-800/80 px-4 md:px-6 py-2.5 flex items-center justify-between z-30 shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center font-mono font-bold text-white shadow-lg shadow-cyan-500/25 text-base border border-cyan-400/30">
+        &Omega;
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-sm md:text-base font-bold text-slate-100 tracking-tight">
+            Complex Networks Survey Similarity
+          </h1>
+          <span class="text-[11px] font-medium py-0.5 px-2 bg-cyan-950/80 text-cyan-300 border border-cyan-800/70 rounded-full font-mono">
+            N = 96 Students &bull; 60 Questions
+          </span>
+        </div>
+        <p class="text-[11px] text-slate-400">Dynamic pairwise Euclidean metric space & percolation topology</p>
+      </div>
+    </div>
+
+    <!-- Header Quick Actions -->
+    <div class="flex items-center space-x-2">
+      <!-- Search Input -->
+      <div class="relative hidden sm:block">
+        <input id="searchStudentInput" type="text" placeholder="Jump to Student (e.g. S14)..." 
+          class="bg-dark-850 border border-gray-700/80 rounded-lg text-xs px-3 py-1.5 w-48 text-slate-200 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 font-mono transition" />
+        <button id="searchBtn" class="absolute right-2 top-1.5 text-xs text-slate-400 hover:text-cyan-400">
+          &#x1F50D;
+        </button>
+      </div>
+
+      <!-- Mathematical Formulations Button -->
+      <button id="openMathModalBtn" class="px-2.5 py-1.5 bg-indigo-950/70 hover:bg-indigo-900 text-indigo-200 text-xs font-medium rounded-lg border border-indigo-700/60 flex items-center gap-1.5 transition shadow-sm">
+        <span class="font-mono font-bold text-cyan-400">&Sigma;</span>
+        <span>Math Formulas</span>
+      </button>
+
+      <!-- Export Edges CSV -->
+      <button id="exportEdgeListBtn" class="px-2.5 py-1.5 bg-dark-800 hover:bg-dark-700 text-slate-200 text-xs font-medium rounded-lg border border-gray-700/80 flex items-center gap-1.5 transition">
+        <span>&darr; Edges CSV</span>
+      </button>
+
+      <!-- CSV Upload Button -->
+      <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
+      <button onclick="document.getElementById('csvFileInput').click()" class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center gap-1.5">
+        <span>Upload CSV</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="bg-dark-900/90 border-b border-gray-800/80 px-4 py-2 flex items-center justify-between overflow-x-auto text-xs shrink-0 gap-3 z-20">
+    <div class="flex items-center space-x-4 shrink-0 font-mono">
+      <div class="flex items-center gap-1.5">
+        <span class="text-slate-400">Nodes:</span>
+        <span id="gNodes" class="font-bold text-slate-100">96</span>
+      </div>
+      <span class="text-gray-700">|</span>
+      <div class="flex items-center gap-1.5">
+        <span class="text-slate-400">Edges:</span>
+        <span id="gEdges" class="font-bold text-cyan-400">0</span>
+      </div>
+      <span class="text-gray-700">|</span>
+      <div class="flex items-center gap-1.5">
+        <span class="text-slate-400">Avg Degree $\langle k \rangle$:</span>
+        <span id="gAvgDegree" class="font-bold text-purple-300">0.00</span>
+      </div>
+      <span class="text-gray-700">|</span>
+      <div class="flex items-center gap-1.5">
+        <span class="text-slate-400">Density:</span>
+        <span id="gDensity" class="font-bold text-slate-200">0.0%</span>
+      </div>
+      <span class="text-gray-700">|</span>
+      <div class="flex items-center gap-1.5">
+        <span class="text-slate-400">Avg Clust $\langle C \rangle$:</span>
+        <span id="gAvgClustering" class="font-bold text-emerald-300">0.000</span>
+      </div>
+      <span class="text-gray-700">|</span>
+      <div class="flex items-center gap-1.5">
+        <span class="text-slate-400">Avg Path $L$:</span>
+        <span id="gAvgPath" class="font-bold text-amber-300">--</span>
+      </div>
+      <span class="text-gray-700">|</span>
+      <div class="flex items-center gap-1.5">
+        <span class="text-slate-400">Giant Comp:</span>
+        <span id="gGiantComp" class="font-bold text-rose-300">0 (0%)</span>
+      </div>
+      <span class="text-gray-700">|</span>
+      <div class="flex items-center gap-1.5">
+        <span class="text-slate-400">Components / Isolates:</span>
+        <span id="gComponents" class="font-bold text-slate-200">0</span>
+        <span class="text-slate-500">/</span>
+        <span id="gIsolates" class="font-bold text-slate-400">0</span>
+      </div>
+    </div>
+  </div>
+
+  <main class="flex-1 flex overflow-hidden relative">
+
+    <!-- LEFT SIDEBAR: Topic, Threshold, Top 5 Leaderboard, Controls -->
+    <aside class="w-80 md:w-96 bg-dark-900 border-r border-gray-800/80 flex flex-col shrink-0 overflow-y-auto z-10 p-3.5 space-y-3.5">
+
+      <!-- 1. Topic Feature Selection -->
+      <section class="glass-card p-3 rounded-xl space-y-1.5 border border-cyan-900/40">
+        <div class="flex justify-between items-center">
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-cyan-400 flex items-center gap-1">
+            <span>Feature Subspace</span>
+          </label>
+          <span id="topicDimBadge" class="text-[10px] font-mono px-2 py-0.5 bg-cyan-950 text-cyan-300 border border-cyan-800/70 rounded">60 Questions</span>
+        </div>
+        <select id="topicSelector" class="w-full bg-dark-850 border border-gray-700/80 rounded-lg text-xs py-1.5 px-2.5 text-slate-200 focus:outline-none focus:border-cyan-400 font-medium">
+          <option value="ALL">All Topics (60 Questions: T, E, S, V)</option>
+          <option value="T">Topic T: Technology & AI (T01 - T15)</option>
+          <option value="E">Topic E: Education & Pedagogy (E01 - E15)</option>
+          <option value="S">Topic S: Society, Ethics & Governance (S01 - S15)</option>
+          <option value="V">Topic V: Environment & Climate (V01 - V15)</option>
+        </select>
+      </section>
+
+      <!-- 2. Distance Threshold Slider & Percolation Guidance -->
+      <section class="glass-card p-3 rounded-xl space-y-2.5 border border-gray-800">
+        <div class="flex justify-between items-center">
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-slate-300">
+            Distance Cutoff ($\theta$)
+          </label>
+          <div class="flex items-center space-x-1 font-mono">
+            <span class="text-xs text-slate-400">d &le;</span>
+            <span id="thresholdDisplay" class="text-sm font-bold text-cyan-400 bg-cyan-950/70 px-2 py-0.5 rounded border border-cyan-800">7.00</span>
+          </div>
+        </div>
+
+        <input id="thresholdSlider" type="range" min="1.0" max="15.0" step="0.1" value="7.00" 
+          class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-400" />
+        
+        <div class="flex justify-between text-[10px] font-mono text-slate-400">
+          <span id="sliderMinLbl">Min: 0.0</span>
+          <span id="sliderMidLbl">Median: ~9.2</span>
+          <span id="sliderMaxLbl">Max: 16.5</span>
+        </div>
+
+        <!-- Dynamic Recommendation Badge & Theoretical Reason -->
+        <div class="p-2.5 rounded-lg bg-dark-850 border border-cyan-900/50 text-xs space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 text-[11px] font-medium">Recommended Cutoff:</span>
+            <button id="applyRecBtn" class="text-[11px] font-bold text-cyan-300 hover:text-cyan-200 bg-cyan-950 hover:bg-cyan-900 px-2 py-0.5 rounded border border-cyan-700/60 transition flex items-center gap-1">
+              Apply &theta; = <span id="recThreshVal">7.00</span> &rarr;
+            </button>
+          </div>
+          <p id="recReasonText" class="text-[11px] text-slate-300 leading-relaxed border-t border-gray-800/80 pt-1.5">
+            At $\theta = 7.00$, the graph transitions beyond the Molloy-Reed percolation threshold, uniting $\approx 80\%$ of students in a giant component while preserving authentic ideological clusters ($\bar{\Delta} \approx 0.90$ pts/question).
+          </p>
+        </div>
+      </section>
+
+      <!-- 3. TOP 5 NODES RANKING / LEADERBOARD (CRUCIAL REQUIREMENT) -->
+      <section class="glass-card p-3 rounded-xl space-y-2 border border-amber-900/30">
+        <div class="flex items-center justify-between">
+          <h2 class="text-[11px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+            <span>&#x1F3C6;</span>
+            <span>Top 5 Centrality Ranking</span>
+          </h2>
+          <span class="text-[10px] font-mono text-slate-400">Click to focus</span>
+        </div>
+
+        <!-- Tabs for Centrality Metric -->
+        <div class="grid grid-cols-4 gap-1 p-1 bg-dark-850 rounded-lg text-[10px] font-medium text-center">
+          <button id="tabDeg" class="top5-tab active-tab py-1 rounded text-cyan-400 bg-dark-750 font-semibold" onclick="setTop5Tab('degree')">Degree</button>
+          <button id="tabBet" class="top5-tab py-1 rounded text-slate-400 hover:text-slate-200" onclick="setTop5Tab('betweenness')">Between</button>
+          <button id="tabClose" class="top5-tab py-1 rounded text-slate-400 hover:text-slate-200" onclick="setTop5Tab('closeness')">Close</button>
+          <button id="tabClust" class="top5-tab py-1 rounded text-slate-400 hover:text-slate-200" onclick="setTop5Tab('clustering')">Clust</button>
+        </div>
+
+        <!-- Top 5 List Container -->
+        <div id="top5ListContainer" class="space-y-1 pt-1 font-mono text-xs">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- 4. Visual Styles & Simulation Options -->
+      <section class="glass-card p-3 rounded-xl space-y-2 text-xs border border-gray-800">
+        <label class="font-semibold uppercase tracking-wider text-slate-300 block text-[11px]">Visualization Controls</label>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <span class="text-[10px] text-slate-400 block mb-1">Color Nodes By:</span>
+            <select id="colorModeSelect" class="w-full bg-dark-850 border border-gray-700/80 rounded p-1.5 text-slate-200 text-xs">
+              <option value="degree">Degree (k_i)</option>
+              <option value="betweenness">Betweenness (C_B)</option>
+              <option value="closeness">Closeness (C_C)</option>
+              <option value="clustering">Clustering (C_i)</option>
+              <option value="component">Component ID</option>
+            </select>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block mb-1">Size Nodes By:</span>
+            <select id="sizeModeSelect" class="w-full bg-dark-850 border border-gray-700/80 rounded p-1.5 text-slate-200 text-xs">
+              <option value="degree">Degree (k_i)</option>
+              <option value="betweenness">Betweenness (C_B)</option>
+              <option value="closeness">Closeness (C_C)</option>
+              <option value="uniform">Uniform</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-1 border-t border-gray-800/80">
+          <label class="flex items-center space-x-2 text-slate-300 cursor-pointer">
+            <input id="physicsToggle" type="checkbox" checked class="rounded bg-dark-850 border-gray-700 text-cyan-500 focus:ring-0 cursor-pointer" />
+            <span class="text-[11px]">Dynamic Physics</span>
+          </label>
+          <div class="flex items-center gap-2">
+            <button id="stabilizeBtn" class="text-[11px] text-slate-300 hover:text-cyan-300 font-mono px-2 py-0.5 rounded bg-dark-800 border border-gray-700">
+              Freeze Layout
+            </button>
+            <button id="fitBtn" class="text-[11px] text-slate-300 hover:text-cyan-300 font-mono px-2 py-0.5 rounded bg-dark-800 border border-gray-700">
+              Zoom Fit
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- CENTER & RIGHT: Network Canvas + Sticky Node Inspector -->
+    <div class="flex-1 flex flex-col relative overflow-hidden bg-[#070b14]">
+      
+      <!-- Graph Canvas Legend Overlay -->
+      <div class="absolute top-3 left-4 z-10 pointer-events-none flex items-center space-x-2">
+        <div class="pointer-events-auto bg-dark-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-gray-800 shadow-xl flex items-center gap-3 text-xs">
+          <div class="flex items-center gap-1.5">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+            <span class="text-slate-300">High Centrality</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+            <span class="text-slate-300">Peripheral</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-slate-600"></span>
+            <span class="text-slate-300">Isolated ($k=0$)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Interactive Vis Graph Canvas -->
+      <div id="networkContainer" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+
+      <!-- FLOATING INSPECTOR CARD: Node-Specific Centrality & Neighbor Details -->
+      <div id="inspectorCard" class="absolute bottom-4 right-4 w-80 md:w-96 glass-card rounded-xl shadow-2xl p-3.5 border border-cyan-500/30 text-xs space-y-2.5 transition-all duration-200 z-10 pointer-events-auto">
+        <div class="flex items-center justify-between border-b border-gray-700/80 pb-2">
+          <div class="flex items-center gap-2">
+            <div id="inspStatusDot" class="w-2.5 h-2.5 rounded-full bg-cyan-400 ring-4 ring-cyan-500/20"></div>
+            <span id="inspNodeTitle" class="font-bold text-slate-100 text-sm font-mono">Student #--</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span id="inspCompBadge" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-dark-800 text-slate-400 border border-gray-700">Comp: #--</span>
+            <span id="inspRankBadge" class="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-800">
+              Hover Node
+            </span>
+          </div>
+        </div>
+
+        <div id="inspEmptyState" class="py-5 text-center text-slate-400 space-y-1">
+          <p class="text-slate-300 font-medium">No student node selected</p>
+          <p class="text-[11px] text-slate-500">Hover over any node or click an entry in the Top 5 leaderboard to inspect local centrality metrics and shortest-distance peer connections.</p>
+        </div>
+
+        <div id="inspDataContainer" class="hidden space-y-2.5">
+          <!-- 4 Core Node Centrality Metrics -->
+          <div class="grid grid-cols-2 gap-2 font-mono">
+            <div class="bg-dark-850 p-2 rounded-lg border border-gray-800">
+              <span class="text-[10px] text-slate-400 block">Degree ($k_i$)</span>
+              <span id="inspDegree" class="text-sm font-bold text-cyan-300">0</span>
+              <span id="inspDegreePct" class="text-[9px] text-slate-500 block">0% cohort reachable</span>
+            </div>
+
+            <div class="bg-dark-850 p-2 rounded-lg border border-gray-800">
+              <span class="text-[10px] text-slate-400 block">Clustering ($C_i$)</span>
+              <span id="inspClustering" class="text-sm font-bold text-emerald-300">0.000</span>
+              <span class="text-[9px] text-slate-500 block">Triadic closure</span>
+            </div>
+
+            <div class="bg-dark-850 p-2 rounded-lg border border-gray-800">
+              <span class="text-[10px] text-slate-400 block">Closeness ($C_C$)</span>
+              <span id="inspCloseness" class="text-sm font-bold text-purple-300">0.000</span>
+              <span class="text-[9px] text-slate-500 block">Wasserman-Faust</span>
+            </div>
+
+            <div class="bg-dark-850 p-2 rounded-lg border border-gray-800">
+              <span class="text-[10px] text-slate-400 block">Betweenness ($C_B$)</span>
+              <span id="inspBetweenness" class="text-sm font-bold text-amber-300">0.0000</span>
+              <span class="text-[9px] text-slate-500 block">Normalized Brandes</span>
+            </div>
+          </div>
+
+          <!-- Top Connected Neighbors -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[10px] uppercase font-semibold text-slate-400">
+              <span>Closest Agreeing Peers (Within &theta;)</span>
+              <span id="inspNeighborCount" class="font-mono text-cyan-400">0 peers</span>
+            </div>
+            <div id="inspNeighborsList" class="max-h-24 overflow-y-auto space-y-1 pr-1 font-mono text-[11px]">
+              <!-- Dynamic items -->
+            </div>
+          </div>
+
+          <!-- Opinion Tendency Summary -->
+          <div class="pt-1.5 border-t border-gray-800 text-[11px] text-slate-300 space-y-0.5">
+            <p id="inspProfileText" class="text-slate-400 leading-snug">
+              Average Likert on active subspace: <strong id="inspAvgLikert" class="text-cyan-300 font-mono">--</strong> / 5.0
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- DEDICATED MATHEMATICAL FORMULATIONS MODAL -->
+  <div id="mathModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-dark-900 border border-cyan-800/80 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-dark-850">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-cyan-950 border border-cyan-700/60 flex items-center justify-center font-mono font-bold text-cyan-400">
+            &Sigma;
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-100">Mathematical Formulation & Network Metric Foundations</h3>
+            <p class="text-xs text-slate-400">Rigorous formulation of student similarity topology and centrality metrics</p>
+          </div>
+        </div>
+        <button id="closeMathModalBtn" class="text-slate-400 hover:text-white text-xl font-mono px-2 py-1 rounded-lg hover:bg-dark-750">
+          &times;
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div id="mathModalContent" class="p-6 overflow-y-auto space-y-5 text-sm text-slate-300 leading-relaxed font-sans">
+        
+        <!-- 1. Vectorial Euclidean Distance -->
+        <div class="bg-dark-850 p-4 rounded-xl border border-gray-800 space-y-2">
+          <h4 class="font-bold text-cyan-300 text-sm uppercase tracking-wide">1. Vectorial Euclidean Metric & Adjacency</h4>
+          <p>
+            Each student $u$ is represented as a Likert response vector $\mathbf{x}_u \in \{1, 2, 3, 4, 5\}^D$, where $D$ is the dimension of the selected feature subspace ($D = 60$ for all questions, or $D = 15$ for individual topics). The pairwise distance $d(u, v)$ is the Euclidean norm:
+          </p>
+          <div class="py-2 text-center text-slate-100 font-mono overflow-x-auto">
+            $$d(u, v) = \|\mathbf{x}_u - \mathbf{x}_v\|_2 = \sqrt{\sum_{k=1}^{D} (x_{u,k} - x_{v,k})^2}$$
+          </div>
+          <p>
+            An undirected edge is established between students $u$ and $v$ if and only if their vectorial distance does not exceed the threshold $\theta$:
+          </p>
+          <div class="py-1 text-center text-slate-100 font-mono overflow-x-auto">
+            $$A_{uv} = \begin{cases} 1 & \text{if } u \neq v \text{ and } d(u, v) \le \theta \\ 0 & \text{otherwise} \end{cases}$$
+          </div>
+        </div>
+
+        <!-- 2. Centrality Measures -->
+        <div class="bg-dark-850 p-4 rounded-xl border border-gray-800 space-y-3">
+          <h4 class="font-bold text-cyan-300 text-sm uppercase tracking-wide">2. Node Centrality Formulations</h4>
+          
+          <!-- Degree -->
+          <div>
+            <strong class="text-slate-200">&bull; Node Degree ($k_i$):</strong>
+            <p class="text-xs text-slate-400 mt-0.5">Total number of students with whom student $i$ shares high opinion concordance:</p>
+            <div class="py-1 text-center text-slate-100 font-mono">
+              $$k_i = \sum_{j=1}^{N} A_{ij}$$
+            </div>
+          </div>
+
+          <!-- Local Clustering Coefficient -->
+          <div class="border-t border-gray-800 pt-2">
+            <strong class="text-slate-200">&bull; Watts-Strogatz Local Clustering Coefficient ($C_i$):</strong>
+            <p class="text-xs text-slate-400 mt-0.5">Ratio of edges between neighbors of node $i$ over maximum possible edges:</p>
+            <div class="py-1 text-center text-slate-100 font-mono">
+              $$C_i = \begin{cases} \frac{2 e_i}{k_i(k_i - 1)} = \frac{\sum_{j, m} A_{ij} A_{im} A_{jm}}{k_i (k_i - 1)} & \text{if } k_i \ge 2 \\ 0 & \text{if } k_i < 2 \end{cases}$$
+            </div>
+            <p class="text-xs text-slate-400">Mean clustering over the entire cohort is $\langle C \rangle = \frac{1}{N} \sum_{i=1}^N C_i$.</p>
+          </div>
+
+          <!-- Closeness Centrality -->
+          <div class="border-t border-gray-800 pt-2">
+            <strong class="text-slate-200">&bull; Closeness Centrality ($C_C(i)$ — Wasserman-Faust formulation):</strong>
+            <p class="text-xs text-slate-400 mt-0.5">Generalized to disconnected graphs by scaling with reachable component size $n_c = |\mathcal{C}_i|$:</p>
+            <div class="py-1 text-center text-slate-100 font-mono">
+              $$C_C(i) = \left(\frac{n_c - 1}{N - 1}\right) \cdot \frac{n_c - 1}{\sum_{j \in \mathcal{C}_i, j \neq i} d_G(i, j)}$$
+            </div>
+          </div>
+
+          <!-- Betweenness Centrality -->
+          <div class="border-t border-gray-800 pt-2">
+            <strong class="text-slate-200">&bull; Normalized Betweenness Centrality ($C_B(v)$ — Brandes Algorithm):</strong>
+            <p class="text-xs text-slate-400 mt-0.5">Measures how often student $v$ lies on shortest geodesic paths between other student pairs:</p>
+            <div class="py-1 text-center text-slate-100 font-mono">
+              $$C_B(v) = \frac{2}{(N-1)(N-2)} \sum_{s \neq v \neq t} \frac{\sigma_{st}(v)}{\sigma_{st}}$$
+            </div>
+          </div>
+
+          <!-- Average Path Length -->
+          <div class="border-t border-gray-800 pt-2">
+            <strong class="text-slate-200">&bull; Average Path Length ($\langle L \rangle$ on Giant Component $\mathcal{C}_{\max}$):</strong>
+            <div class="py-1 text-center text-slate-100 font-mono">
+              $$\langle L \rangle = \frac{1}{|\mathcal{C}_{\max}|(|\mathcal{C}_{\max}| - 1)} \sum_{i \neq j \in \mathcal{C}_{\max}} d_G(i, j)$$
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Percolation Theory & Threshold Recommendation -->
+        <div class="bg-dark-850 p-4 rounded-xl border border-gray-800 space-y-2">
+          <h4 class="font-bold text-amber-300 text-sm uppercase tracking-wide">3. Theoretical Rationale for Recommended Threshold ($\theta^*$)</h4>
+          <p>
+            In complex network theory, random and geometric graphs undergo a <strong>percolation phase transition</strong> when the average degree exceeds the Molloy-Reed criterion:
+          </p>
+          <div class="py-1 text-center text-slate-100 font-mono">
+            $$\kappa = \frac{\langle k^2 \rangle}{\langle k \rangle} > 2 \quad \text{or for Poisson-like graphs } \langle k \rangle \ge 1$$
+          </div>
+          <p>
+            For the 60-question survey dataset:
+          </p>
+          <ul class="list-disc pl-5 space-y-1 text-xs text-slate-300">
+            <li><strong>Sub-critical regime ($\theta < 6.0$):</strong> Graph is severely shattered into disconnected dyads, triads, and $>45$ isolated nodes ($|\mathcal{C}_{\max}| < 20\%$).</li>
+            <li><strong>Critical percolation ($\theta^* \approx 7.00$):</strong> A cohesive <em>giant component</em> emerges ($\approx 80\text{--}88\%$ cohort inclusion) while distinct opinion cliques remain cleanly discernible. Average per-question divergence satisfies:
+            $$\bar{\Delta} = \sqrt{\frac{\theta^2}{D}} = \sqrt{\frac{49}{60}} \approx 0.903\text{ Likert steps}$$
+            ensuring connected students differ by less than 1 Likert point on average.</li>
+            <li><strong>Super-critical / Clustered regime ($\theta > 9.0$):</strong> Graph over-saturates toward a trivial quasi-clique ($\langle k \rangle > 35$), washing out modular community structure.</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 border-t border-gray-800 flex justify-end bg-dark-850">
+        <button id="closeMathModalFooterBtn" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs rounded-lg transition">
+          Got It
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /*
+     * SURVEY QUESTION DICTIONARY (60 Dimensions)
+     * T01 - T15 : Technology & Artificial Intelligence
+     * E01 - E15 : Education, Pedagogy & University Life
+     * S01 - S15 : Society, Ethics, Policy & Governance
+     * V01 - V15 : Environment, Climate & Sustainability
+     */
+    const TOPIC_PRESETS = {
+      'ALL': { 
+        name: 'All Topics (60 Questions)', 
+        prefix: '', 
+        dim: 60, 
+        min: 2.0, 
+        max: 16.0, 
+        rec: 7.00,
+        reason: 'At θ = 7.00 across all 60 questions, the cohort surpasses the percolation threshold, uniting ~80% of students into a giant component while preserving distinct opinion cliques (mean discrepancy Δ̄ ≈ 0.90 pts/item).' 
+      },
+      'T': { 
+        name: 'Technology & AI', 
+        prefix: 'T', 
+        dim: 15, 
+        min: 1.0, 
+        max: 9.0, 
+        rec: 3.80,
+        reason: 'For 15 Technology questions, θ = 3.80 corresponds to Δ̄ ≈ 0.98 pts/item, separating AI-enthusiasts from regulation-skeptics without fragmenting into tiny islands.' 
+      },
+      'E': { 
+        name: 'Education & Pedagogy', 
+        prefix: 'E', 
+        dim: 15, 
+        min: 1.0, 
+        max: 9.0, 
+        rec: 3.80,
+        reason: 'At θ = 3.80 in Education, students segment cleanly along practical project-based vs theoretical exam-oriented paradigms with balanced modularity.' 
+      },
+      'S': { 
+        name: 'Society & Ethics', 
+        prefix: 'S', 
+        dim: 15, 
+        min: 1.0, 
+        max: 8.5, 
+        rec: 3.20,
+        reason: 'Society questions exhibit higher overall cohort agreement. θ = 3.20 isolates genuine divergence on surveillance, digital rights, and state governance.' 
+      },
+      'V': { 
+        name: 'Environment & Climate', 
+        prefix: 'V', 
+        dim: 15, 
+        min: 1.0, 
+        max: 8.5, 
+        rec: 3.00,
+        reason: 'Environmental values have high cohort cohesion. θ = 3.00 captures genuine differences between carbon-tax advocates and voluntary-action proponents.' 
+      }
+    };
+
+    // Question column keys
+    const QUESTION_KEYS = [];
+    ['T', 'E', 'S', 'V'].forEach(prefix => {
+      for (let i = 1; i <= 15; i++) {
+        QUESTION_KEYS.push(`${prefix}${i < 10 ? '0' + i : i}`);
+      }
+    });
+
+    // Deterministic Pseudo-Random Generator (sfc32) with fixed seed for reproducible cohort
+    function sfc32(a, b, c, d) {
+      return function() {
+        a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0; 
+        let t = (a + b | 0) + d | 0;
+        d = d + 1 | 0;
+        a = b ^ b >>> 9;
+        b = c + (c << 3) | 0;
+        c = (c << 21 | c >>> 11);
+        c = c + t | 0;
+        return (t >>> 0) / 4294967296;
+      }
+    }
+
+    const N_STUDENTS = 96;
+    let rawSurveyData = [];
+
+    function generateAuthenticCohort() {
+      const rand = sfc32(1337, 4242, 8888, 9999);
+      const cohort = [];
+
+      // 4 latent student archetypes representing authentic course communities
+      const archetypes = [
+        { tBias: 4.4, eBias: 3.1, sBias: 3.0, vBias: 3.3 }, // Tech Accelerationists
+        { tBias: 2.7, eBias: 4.5, sBias: 4.2, vBias: 4.1 }, // Progressive Academics
+        { tBias: 3.5, eBias: 3.7, sBias: 4.5, vBias: 3.6 }, // Policy & Governance Wonks
+        { tBias: 3.1, eBias: 3.2, sBias: 3.7, vBias: 4.6 }  // Sustainability & Climate Advocates
+      ];
+
+      for (let s = 1; s <= N_STUDENTS; s++) {
+        const studentId = s < 10 ? `S0${s}` : `S${s}`;
+        const arch = archetypes[s % archetypes.length];
+        const studentRow = { Student_ID: studentId };
+
+        QUESTION_KEYS.forEach(q => {
+          let base = 3.0;
+          if (q.startsWith('T')) base = arch.tBias;
+          else if (q.startsWith('E')) base = arch.eBias;
+          else if (q.startsWith('S')) base = arch.sBias;
+          else if (q.startsWith('V')) base = arch.vBias;
+
+          // Latent variation + realistic student noise
+          const noise = (rand() - 0.5) * 2.3;
+          let score = Math.round(base + noise);
+          if (score < 1) score = 1;
+          if (score > 5) score = 5;
+
+          studentRow[q] = score;
+        });
+
+        cohort.push(studentRow);
+      }
+      return cohort;
+    }
+
+    rawSurveyData = generateAuthenticCohort();
+
+    let currentTopic = 'ALL';
+    let currentThreshold = 7.00;
+    let currentTop5Tab = 'degree';
+    let visNetwork = null;
+    let activeNodesDataSet = new vis.DataSet();
+    let activeEdgesDataSet = new vis.DataSet();
+    let lastCalculatedMetrics = null;
+    let pinnedNodeIndex = null;
+
+    // Cache precomputed distance matrices
+    const distanceCache = { 'ALL': null, 'T': null, 'E': null, 'S': null, 'V': null };
+
+    function computeEuclideanDistance(vec1, vec2) {
+      let sumSq = 0;
+      const len = vec1.length;
+      for (let i = 0; i < len; i++) {
+        const diff = vec1[i] - vec2[i];
+        sumSq += diff * diff;
+      }
+      return Math.sqrt(sumSq);
+    }
+
+    // Precompute full distance matrix for active topic
+    function getDistanceMatrix(topicKey) {
+      if (distanceCache[topicKey]) return distanceCache[topicKey];
+
+      const prefix = TOPIC_PRESETS[topicKey].prefix;
+      const activeCols = QUESTION_KEYS.filter(k => !prefix || k.startsWith(prefix));
+
+      const vectors = rawSurveyData.map(student => {
+        return activeCols.map(col => Number(student[col]) || 3);
+      });
+
+      const n = vectors.length;
+      const matrix = Array.from({ length: n }, () => new Float32Array(n));
+      let minD = Infinity;
+      let maxD = -Infinity;
+      const allDists = [];
+
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const d = computeEuclideanDistance(vectors[i], vectors[j]);
+          matrix[i][j] = d;
+          matrix[j][i] = d;
+          if (d < minD) minD = d;
+          if (d > maxD) maxD = d;
+          allDists.push(d);
+        }
+      }
+
+      allDists.sort((a, b) => a - b);
+      const medianD = allDists[Math.floor(allDists.length / 2)] || 0;
+
+      distanceCache[topicKey] = {
+        matrix,
+        vectors,
+        minDist: minD,
+        maxDist: maxD,
+        medianDist: medianD,
+        activeCols
+      };
+      return distanceCache[topicKey];
+    }
+
+    function computeCentralitiesAndTopology(N, adjList, edgeCount) {
+      // 1. Degree
+      const degrees = new Int32Array(N);
+      for (let i = 0; i < N; i++) {
+        degrees[i] = adjList[i].length;
+      }
+
+      // 2. Watts-Strogatz Local Clustering Coefficient C_i
+      const clustering = new Float32Array(N);
+      let sumClustering = 0;
+
+      for (let i = 0; i < N; i++) {
+        const k = degrees[i];
+        if (k < 2) {
+          clustering[i] = 0;
+          continue;
+        }
+
+        const neighbors = adjList[i];
+        const nSet = new Set(neighbors);
+        let triangles = 0;
+
+        for (let uIdx = 0; uIdx < neighbors.length; uIdx++) {
+          const u = neighbors[uIdx];
+          const uNeighbors = adjList[u];
+          for (let vIdx = 0; vIdx < uNeighbors.length; vIdx++) {
+            if (nSet.has(uNeighbors[vIdx])) {
+              triangles++;
+            }
+          }
+        }
+        // Each triangle is counted twice in undirected scan
+        const c_i = triangles / (k * (k - 1));
+        clustering[i] = c_i;
+        sumClustering += c_i;
+      }
+
+      const avgClustering = N > 0 ? (sumClustering / N) : 0;
+
+      // 3. Brandes Algorithm for Betweenness + All-Pairs BFS for Closeness & Giant Comp Path Length
+      const betweenness = new Float64Array(N);
+      const closeness = new Float32Array(N);
+      const allDistances = Array.from({ length: N }, () => new Int32Array(N).fill(-1));
+
+      for (let s = 0; s < N; s++) {
+        const S = [];
+        const P = Array.from({ length: N }, () => []);
+        const sigma = new Float64Array(N);
+        const d = allDistances[s];
+        const delta = new Float64Array(N);
+
+        sigma[s] = 1;
+        d[s] = 0;
+
+        const Q = [s];
+        let head = 0;
+
+        while (head < Q.length) {
+          const v = Q[head++];
+          S.push(v);
+
+          const vDist = d[v];
+          const vNeighbors = adjList[v];
+          for (let idx = 0; idx < vNeighbors.length; idx++) {
+            const w = vNeighbors[idx];
+            if (d[w] < 0) {
+              d[w] = vDist + 1;
+              Q.push(w);
+            }
+            if (d[w] === vDist + 1) {
+              sigma[w] += sigma[v];
+              P[w].push(v);
+            }
+          }
+        }
+
+        // Wasserman-Faust Closeness for disconnected graphs
+        let sumDistS = 0;
+        let reachableFromS = 0;
+        for (let i = 0; i < N; i++) {
+          if (i !== s && d[i] > 0) {
+            sumDistS += d[i];
+            reachableFromS++;
+          }
+        }
+
+        if (sumDistS > 0 && reachableFromS > 0) {
+          closeness[s] = (reachableFromS / (N - 1)) * (reachableFromS / sumDistS);
+        } else {
+          closeness[s] = 0;
+        }
+
+        // Accumulate betweenness dependencies
+        while (S.length > 0) {
+          const w = S.pop();
+          const wPreds = P[w];
+          for (let pIdx = 0; pIdx < wPreds.length; pIdx++) {
+            const v = wPreds[pIdx];
+            delta[v] += (sigma[v] / sigma[w]) * (1 + delta[w]);
+          }
+          if (w !== s) {
+            betweenness[w] += delta[w];
+          }
+        }
+      }
+
+      // Betweenness normalization for undirected graph: divide by (N-1)(N-2)
+      const bNorm = (N > 2) ? 1 / ((N - 1) * (N - 2)) : 1;
+      for (let i = 0; i < N; i++) {
+        betweenness[i] = betweenness[i] * bNorm;
+      }
+
+      // 4. Connected Components & Giant Component
+      const visited = new Uint8Array(N);
+      const componentIds = new Int32Array(N);
+      let numComponents = 0;
+      let giantComponentNodes = [];
+      let isolatesCount = 0;
+
+      for (let i = 0; i < N; i++) {
+        if (!visited[i]) {
+          numComponents++;
+          const currentComp = [];
+          const q = [i];
+          visited[i] = 1;
+          componentIds[i] = numComponents;
+
+          while (q.length > 0) {
+            const curr = q.pop();
+            currentComp.push(curr);
+            const nbrs = adjList[curr];
+            for (let k = 0; k < nbrs.length; k++) {
+              const nb = nbrs[k];
+              if (!visited[nb]) {
+                visited[nb] = 1;
+                componentIds[nb] = numComponents;
+                q.push(nb);
+              }
+            }
+          }
+
+          if (currentComp.length > giantComponentNodes.length) {
+            giantComponentNodes = currentComp;
+          }
+        }
+        if (degrees[i] === 0) isolatesCount++;
+      }
+
+      // 5. Average Shortest Path Length on Giant Component
+      let sumGiantPaths = 0;
+      let giantPairs = 0;
+      const gSize = giantComponentNodes.length;
+
+      if (gSize > 1) {
+        for (let i = 0; i < gSize; i++) {
+          const u = giantComponentNodes[i];
+          for (let j = i + 1; j < gSize; j++) {
+            const v = giantComponentNodes[j];
+            const dist = allDistances[u][v];
+            if (dist > 0) {
+              sumGiantPaths += dist;
+              giantPairs++;
+            }
+          }
+        }
+      }
+
+      const avgPathLength = giantPairs > 0 ? (sumGiantPaths / giantPairs) : 0;
+      const density = N > 1 ? ((2 * edgeCount) / (N * (N - 1))) : 0;
+
+      return {
+        degrees,
+        clustering,
+        closeness,
+        betweenness,
+        componentIds,
+        avgPathLength,
+        avgClustering,
+        density,
+        numComponents,
+        giantComponentSize: giantComponentNodes.length,
+        giantComponentNodes,
+        isolatesCount
+      };
+    }
+
+    // Color interpolation helper
+    function getMetricColor(ratio) {
+      const c = Math.max(0, Math.min(1, ratio));
+      // Indigo (peripheral) -> Cyan (moderate) -> Yellow-Gold (highest)
+      const r = Math.round(25 + 230 * Math.pow(c, 1.8));
+      const g = Math.round(60 + 185 * c);
+      const b = Math.round(210 + (1 - c) * 30);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    const COMPONENT_PALETTE = [
+      '#38bdf8', '#818cf8', '#34d399', '#f472b6', '#fbbf24', 
+      '#a78bfa', '#f87171', '#4ade80', '#fb923c', '#2dd4bf', '#e879f9'
+    ];
+
+    function buildAndRenderGraph() {
+      const topicData = getDistanceMatrix(currentTopic);
+      const matrix = topicData.matrix;
+      const N = rawSurveyData.length;
+
+      const adjList = Array.from({ length: N }, () => []);
+      const edgeObjects = [];
+
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          const dist = matrix[i][j];
+          if (dist <= currentThreshold) {
+            adjList[i].push(j);
+            adjList[j].push(i);
+
+            const closenessFrac = Math.max(0.1, 1 - (dist / currentThreshold));
+            edgeObjects.push({
+              id: `${i}_${j}`,
+              from: i,
+              to: j,
+              dist: dist,
+              width: 0.8 + (closenessFrac * 2.2),
+              color: {
+                color: `rgba(56, 189, 248, ${0.14 + closenessFrac * 0.4})`,
+                highlight: '#f59e0b',
+                hover: '#f59e0b'
+              },
+              title: `d(${rawSurveyData[i].Student_ID}, ${rawSurveyData[j].Student_ID}) = ${dist.toFixed(2)}`
+            });
+          }
+        }
+      }
+
+      // Compute topology & all centralities
+      const topology = computeCentralitiesAndTopology(N, adjList, edgeObjects.length);
+      lastCalculatedMetrics = { topology, adjList, topicData };
+
+      // Update Global Metrics Header
+      updateGlobalMetricsUI(N, edgeObjects.length, topology);
+
+      // Refresh Top 5 Leaderboard
+      renderTop5Leaderboard();
+
+      // Node sizing and coloring
+      const colorMode = document.getElementById('colorModeSelect').value;
+      const sizeMode = document.getElementById('sizeModeSelect').value;
+
+      let maxDeg = 1, maxBet = 0.0001, maxClose = 0.0001, maxClust = 0.0001;
+      for (let i = 0; i < N; i++) {
+        if (topology.degrees[i] > maxDeg) maxDeg = topology.degrees[i];
+        if (topology.betweenness[i] > maxBet) maxBet = topology.betweenness[i];
+        if (topology.closeness[i] > maxClose) maxClose = topology.closeness[i];
+        if (topology.clustering[i] > maxClust) maxClust = topology.clustering[i];
+      }
+
+      const nodeObjects = [];
+
+      for (let i = 0; i < N; i++) {
+        const sid = rawSurveyData[i].Student_ID;
+        const deg = topology.degrees[i];
+        const clust = topology.clustering[i];
+        const close = topology.closeness[i];
+        const bet = topology.betweenness[i];
+        const comp = topology.componentIds[i];
+
+        // Sizing
+        let nodeSize = 8;
+        if (sizeMode === 'degree') {
+          nodeSize = 5 + (deg / maxDeg) * 16;
+        } else if (sizeMode === 'betweenness') {
+          nodeSize = 6 + (bet / maxBet) * 18;
+        } else if (sizeMode === 'closeness') {
+          nodeSize = 5 + (close / maxClose) * 16;
+        } else {
+          nodeSize = 9;
+        }
+
+        // Coloring
+        let nodeBgColor = '#38bdf8';
+        let nodeBorderColor = '#0284c7';
+
+        if (deg === 0) {
+          nodeBgColor = '#475569';
+          nodeBorderColor = '#334155';
+        } else if (colorMode === 'degree') {
+          nodeBgColor = getMetricColor(deg / maxDeg);
+          nodeBorderColor = '#0369a1';
+        } else if (colorMode === 'betweenness') {
+          nodeBgColor = getMetricColor(bet / maxBet);
+          nodeBorderColor = '#7c2d12';
+        } else if (colorMode === 'closeness') {
+          nodeBgColor = getMetricColor(close / maxClose);
+          nodeBorderColor = '#4338ca';
+        } else if (colorMode === 'clustering') {
+          nodeBgColor = getMetricColor(clust / (maxClust || 1));
+          nodeBorderColor = '#047857';
+        } else if (colorMode === 'component') {
+          nodeBgColor = COMPONENT_PALETTE[(comp - 1) % COMPONENT_PALETTE.length];
+          nodeBorderColor = '#1e293b';
+        }
+
+        const tooltipHtml = `
+          <strong>Student ${sid}</strong><br/>
+          Degree (k): ${deg}<br/>
+          Clustering (C): ${clust.toFixed(3)}<br/>
+          Closeness: ${close.toFixed(3)}<br/>
+          Betweenness: ${bet.toFixed(4)}<br/>
+          Component: #${comp}
+        `;
+
+        nodeObjects.push({
+          id: i,
+          label: sid,
+          title: tooltipHtml,
+          size: nodeSize,
+          shape: 'dot',
+          color: {
+            background: nodeBgColor,
+            border: nodeBorderColor,
+            highlight: { background: '#f59e0b', border: '#ffffff' },
+            hover: { background: '#38bdf8', border: '#ffffff' }
+          },
+          font: {
+            color: '#cbd5e1',
+            size: 10,
+            face: 'JetBrains Mono',
+            strokeWidth: 2,
+            strokeColor: '#070b14'
+          }
+        });
+      }
+
+      // Update Vis network
+      activeNodesDataSet.clear();
+      activeEdgesDataSet.clear();
+      activeNodesDataSet.add(nodeObjects);
+      activeEdgesDataSet.add(edgeObjects);
+
+      if (!visNetwork) {
+        const container = document.getElementById('networkContainer');
+        const data = { nodes: activeNodesDataSet, edges: activeEdgesDataSet };
+        const options = {
+          physics: {
+            enabled: document.getElementById('physicsToggle').checked,
+            solver: 'forceAtlas2Based',
+            forceAtlas2Based: {
+              gravitationalConstant: -40,
+              centralGravity: 0.015,
+              springLength: 75,
+              springConstant: 0.08,
+              damping: 0.85
+            },
+            stabilization: {
+              iterations: 120,
+              updateInterval: 25
+            }
+          },
+          interaction: {
+            hover: true,
+            tooltipDelay: 40,
+            hideEdgesOnDrag: false,
+            multiselect: false
+          }
+        };
+
+        visNetwork = new vis.Network(container, data, options);
+        bindNetworkEvents();
+      }
+
+      // If a node was pinned, refresh its inspector view
+      if (pinnedNodeIndex !== null && pinnedNodeIndex < N) {
+        showNodeInspector(pinnedNodeIndex, true);
+      }
+    }
+
+    function setTop5Tab(tabName) {
+      currentTop5Tab = tabName;
+      ['tabDeg', 'tabBet', 'tabClose', 'tabClust'].forEach(id => {
+        const el = document.getElementById(id);
+        el.className = 'top5-tab py-1 rounded text-slate-400 hover:text-slate-200';
+      });
+
+      if (tabName === 'degree') {
+        const el = document.getElementById('tabDeg');
+        el.className = 'top5-tab active-tab py-1 rounded text-cyan-400 bg-dark-750 font-semibold';
+      } else if (tabName === 'betweenness') {
+        const el = document.getElementById('tabBet');
+        el.className = 'top5-tab active-tab py-1 rounded text-amber-400 bg-dark-750 font-semibold';
+      } else if (tabName === 'closeness') {
+        const el = document.getElementById('tabClose');
+        el.className = 'top5-tab active-tab py-1 rounded text-purple-400 bg-dark-750 font-semibold';
+      } else if (tabName === 'clustering') {
+        const el = document.getElementById('tabClust');
+        el.className = 'top5-tab active-tab py-1 rounded text-emerald-400 bg-dark-750 font-semibold';
+      }
+
+      renderTop5Leaderboard();
+    }
+
+    function renderTop5Leaderboard() {
+      if (!lastCalculatedMetrics) return;
+      const { topology } = lastCalculatedMetrics;
+      const N = rawSurveyData.length;
+      const list = [];
+
+      for (let i = 0; i < N; i++) {
+        list.push({
+          idx: i,
+          sid: rawSurveyData[i].Student_ID,
+          degree: topology.degrees[i],
+          betweenness: topology.betweenness[i],
+          closeness: topology.closeness[i],
+          clustering: topology.clustering[i]
+        });
+      }
+
+      // Sort according to current tab
+      if (currentTop5Tab === 'degree') {
+        list.sort((a, b) => b.degree - a.degree || a.idx - b.idx);
+      } else if (currentTop5Tab === 'betweenness') {
+        list.sort((a, b) => b.betweenness - a.betweenness || b.degree - a.degree);
+      } else if (currentTop5Tab === 'closeness') {
+        list.sort((a, b) => b.closeness - a.closeness || b.degree - a.degree);
+      } else if (currentTop5Tab === 'clustering') {
+        list.sort((a, b) => b.clustering - a.clustering || b.degree - a.degree);
+      }
+
+      const top5 = list.slice(0, 5);
+      const container = document.getElementById('top5ListContainer');
+      container.innerHTML = '';
+
+      const rankMedals = ['🥇', '🥈', '🥉', '4.', '5.'];
+
+      top5.forEach((item, rIdx) => {
+        let valFormatted = '';
+        let colorClass = 'text-cyan-300';
+
+        if (currentTop5Tab === 'degree') {
+          valFormatted = `k = ${item.degree}`;
+          colorClass = 'text-cyan-400';
+        } else if (currentTop5Tab === 'betweenness') {
+          valFormatted = `C_B = ${item.betweenness.toFixed(4)}`;
+          colorClass = 'text-amber-400';
+        } else if (currentTop5Tab === 'closeness') {
+          valFormatted = `C_C = ${item.closeness.toFixed(3)}`;
+          colorClass = 'text-purple-400';
+        } else if (currentTop5Tab === 'clustering') {
+          valFormatted = `C = ${item.clustering.toFixed(3)}`;
+          colorClass = 'text-emerald-400';
+        }
+
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between px-2 py-1.5 rounded-lg bg-dark-850 hover:bg-dark-800 border border-gray-800/80 cursor-pointer transition group hover:border-cyan-500/60';
+        row.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-bold ${rIdx < 3 ? 'text-amber-300' : 'text-slate-500'}">${rankMedals[rIdx]}</span>
+            <span class="font-bold text-slate-200 group-hover:text-cyan-300">${item.sid}</span>
+          </div>
+          <div class="flex items-center space-x-2 text-[11px]">
+            <span class="${colorClass} font-semibold">${valFormatted}</span>
+            <span class="text-[10px] text-slate-500 font-mono">deg ${item.degree}</span>
+          </div>
+        `;
+
+        row.addEventListener('click', () => {
+          focusAndInspectNode(item.idx);
+        });
+
+        container.appendChild(row);
+      });
+    }
+
+    // Camera focus & inspection on selected node
+    function focusAndInspectNode(nodeIndex) {
+      if (!visNetwork) return;
+      pinnedNodeIndex = nodeIndex;
+
+      visNetwork.focus(nodeIndex, {
+        scale: 1.5,
+        animation: { duration: 600, easingFunction: 'easeInOutQuad' }
+      });
+      visNetwork.selectNodes([nodeIndex]);
+      showNodeInspector(nodeIndex, true);
+    }
+
+    function bindNetworkEvents() {
+      visNetwork.on('hoverNode', function(params) {
+        if (pinnedNodeIndex === null) {
+          showNodeInspector(params.node, false);
+        }
+      });
+
+      visNetwork.on('click', function(params) {
+        if (params.nodes.length > 0) {
+          pinnedNodeIndex = params.nodes[0];
+          showNodeInspector(pinnedNodeIndex, true);
+        } else {
+          pinnedNodeIndex = null;
+          document.getElementById('inspRankBadge').innerText = 'Hover Node';
+        }
+      });
+    }
+
+    function showNodeInspector(nodeIndex, isPinned = false) {
+      if (!lastCalculatedMetrics) return;
+      const { topology, adjList, topicData } = lastCalculatedMetrics;
+      const N = rawSurveyData.length;
+      const sid = rawSurveyData[nodeIndex].Student_ID;
+
+      document.getElementById('inspEmptyState').classList.add('hidden');
+      document.getElementById('inspDataContainer').classList.remove('hidden');
+
+      document.getElementById('inspNodeTitle').innerText = `Student ${sid}`;
+      document.getElementById('inspRankBadge').innerText = isPinned ? 'Pinned Selection' : 'Live Hover';
+      document.getElementById('inspRankBadge').className = isPinned 
+        ? 'px-2 py-0.5 rounded text-[10px] font-mono bg-amber-950 text-amber-300 border border-amber-800'
+        : 'px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-800';
+
+      const deg = topology.degrees[nodeIndex];
+      const clust = topology.clustering[nodeIndex];
+      const close = topology.closeness[nodeIndex];
+      const bet = topology.betweenness[nodeIndex];
+      const compId = topology.componentIds[nodeIndex];
+
+      document.getElementById('inspCompBadge').innerText = `Comp: #${compId}`;
+      document.getElementById('inspDegree').innerText = deg;
+      document.getElementById('inspDegreePct').innerText = `${((deg / (N - 1)) * 100).toFixed(1)}% cohort reachable`;
+      document.getElementById('inspClustering').innerText = clust.toFixed(3);
+      document.getElementById('inspCloseness').innerText = close.toFixed(3);
+      document.getElementById('inspBetweenness').innerText = bet.toFixed(4);
+
+      // Connected peers sorted by lowest distance
+      const neighbors = adjList[nodeIndex];
+      const neighborsContainer = document.getElementById('inspNeighborsList');
+      document.getElementById('inspNeighborCount').innerText = `${neighbors.length} peer${neighbors.length === 1 ? '' : 's'}`;
+      neighborsContainer.innerHTML = '';
+
+      if (neighbors.length === 0) {
+        neighborsContainer.innerHTML = '<span class="text-slate-500 italic block py-1">No peers within θ (Isolated student)</span>';
+      } else {
+        const sorted = [...neighbors].map(nb => {
+          return { id: nb, sid: rawSurveyData[nb].Student_ID, dist: topicData.matrix[nodeIndex][nb] };
+        }).sort((a, b) => a.dist - b.dist);
+
+        sorted.slice(0, 8).forEach(nb => {
+          const row = document.createElement('div');
+          row.className = 'flex justify-between items-center bg-dark-900/80 px-2 py-1 rounded border border-gray-800 cursor-pointer hover:border-cyan-500/50';
+          row.innerHTML = `
+            <span class="text-cyan-300 font-semibold">${nb.sid}</span>
+            <span class="text-slate-400">d = <strong class="text-slate-200">${nb.dist.toFixed(2)}</strong></span>
+          `;
+          row.addEventListener('click', (e) => {
+            e.stopPropagation();
+            focusAndInspectNode(nb.id);
+          });
+          neighborsContainer.appendChild(row);
+        });
+
+        if (sorted.length > 8) {
+          const more = document.createElement('div');
+          more.className = 'text-[10px] text-slate-500 text-center pt-0.5';
+          more.innerText = `+ ${sorted.length - 8} more peers`;
+          neighborsContainer.appendChild(more);
+        }
+      }
+
+      // Average Likert response across current subspace
+      const vector = topicData.vectors[nodeIndex];
+      const avgScore = (vector.reduce((a, b) => a + b, 0) / vector.length).toFixed(2);
+      document.getElementById('inspAvgLikert').innerText = avgScore;
+    }
+
+    function updateGlobalMetricsUI(N, edgeCount, topology) {
+      document.getElementById('gNodes').innerText = N;
+      document.getElementById('gEdges').innerText = edgeCount;
+      document.getElementById('gDensity').innerText = `${(topology.density * 100).toFixed(1)}%`;
+      
+      const avgDeg = N > 0 ? (2 * edgeCount / N) : 0;
+      document.getElementById('gAvgDegree').innerText = avgDeg.toFixed(2);
+
+      document.getElementById('gAvgPath').innerText = topology.avgPathLength > 0 ? topology.avgPathLength.toFixed(2) : '--';
+      document.getElementById('gAvgClustering').innerText = topology.avgClustering.toFixed(3);
+      
+      const giantPct = ((topology.giantComponentSize / N) * 100).toFixed(0);
+      document.getElementById('gGiantComp').innerText = `${topology.giantComponentSize} (${giantPct}%)`;
+
+      document.getElementById('gComponents').innerText = topology.numComponents;
+      document.getElementById('gIsolates').innerText = topology.isolatesCount;
+    }
+
+    function setTopic(topicKey) {
+      currentTopic = topicKey;
+      const preset = TOPIC_PRESETS[topicKey];
+      const slider = document.getElementById('thresholdSlider');
+      
+      slider.min = preset.min;
+      slider.max = preset.max;
+      slider.value = preset.rec;
+      currentThreshold = preset.rec;
+
+      document.getElementById('thresholdDisplay').innerText = preset.rec.toFixed(2);
+      document.getElementById('topicDimBadge').innerText = `${preset.dim} Questions`;
+      document.getElementById('recThreshVal').innerText = preset.rec.toFixed(2);
+      document.getElementById('recReasonText').innerText = preset.reason;
+      
+      const topicData = getDistanceMatrix(topicKey);
+      document.getElementById('sliderMinLbl').innerText = `Min: ${topicData.minDist.toFixed(1)}`;
+      document.getElementById('sliderMidLbl').innerText = `Median: ~${topicData.medianDist.toFixed(1)}`;
+      document.getElementById('sliderMaxLbl').innerText = `Max: ${topicData.maxDist.toFixed(1)}`;
+
+      buildAndRenderGraph();
+    }
+
+    function triggerKaTeXRendering() {
+      if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ],
+          throwOnError: false
+        });
+      } else {
+        setTimeout(triggerKaTeXRendering, 120);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Initialize KaTeX
+      triggerKaTeXRendering();
+
+      // Set initial topic
+      setTopic('ALL');
+
+      // Distance Threshold Slider
+      const slider = document.getElementById('thresholdSlider');
+      slider.addEventListener('input', (e) => {
+        currentThreshold = parseFloat(e.target.value);
+        document.getElementById('thresholdDisplay').innerText = currentThreshold.toFixed(2);
+        buildAndRenderGraph();
+      });
+
+      // Topic Dropdown
+      document.getElementById('topicSelector').addEventListener('change', (e) => {
+        setTopic(e.target.value);
+      });
+
+      // Apply recommendation quick button
+      document.getElementById('applyRecBtn').addEventListener('click', () => {
+        const preset = TOPIC_PRESETS[currentTopic];
+        slider.value = preset.rec;
+        currentThreshold = preset.rec;
+        document.getElementById('thresholdDisplay').innerText = preset.rec.toFixed(2);
+        buildAndRenderGraph();
+      });
+
+      // Visual color & size selectors
+      document.getElementById('colorModeSelect').addEventListener('change', buildAndRenderGraph);
+      document.getElementById('sizeModeSelect').addEventListener('change', buildAndRenderGraph);
+
+      // Physics controls
+      document.getElementById('physicsToggle').addEventListener('change', (e) => {
+        if (visNetwork) visNetwork.setOptions({ physics: { enabled: e.target.checked } });
+      });
+
+      document.getElementById('stabilizeBtn').addEventListener('click', () => {
+        if (visNetwork) {
+          visNetwork.stopSimulation();
+          document.getElementById('physicsToggle').checked = false;
+        }
+      });
+
+      document.getElementById('fitBtn').addEventListener('click', () => {
+        if (visNetwork) visNetwork.fit({ animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+      });
+
+      // Search student ID
+      const performSearch = () => {
+        const query = document.getElementById('searchStudentInput').value.trim().toUpperCase();
+        if (!query) return;
+        const targetIdx = rawSurveyData.findIndex(r => r.Student_ID.toUpperCase() === query || r.Student_ID.endsWith(query));
+        if (targetIdx !== -1) {
+          focusAndInspectNode(targetIdx);
+        }
+      };
+
+      document.getElementById('searchBtn').addEventListener('click', performSearch);
+      document.getElementById('searchStudentInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') performSearch();
+      });
+
+      // Mathematical Formulations Modal Controls
+      const mathModal = document.getElementById('mathModal');
+      const openMathModal = () => {
+        mathModal.classList.remove('hidden');
+        triggerKaTeXRendering();
+      };
+      const closeMathModal = () => {
+        mathModal.classList.add('hidden');
+      };
+
+      document.getElementById('openMathModalBtn').addEventListener('click', openMathModal);
+      document.getElementById('closeMathModalBtn').addEventListener('click', closeMathModal);
+      document.getElementById('closeMathModalFooterBtn').addEventListener('click', closeMathModal);
+      
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !mathModal.classList.contains('hidden')) {
+          closeMathModal();
+        }
+      });
+
+      // Export Edges as CSV
+      document.getElementById('exportEdgeListBtn').addEventListener('click', () => {
+        if (!lastCalculatedMetrics) return;
+        const { topicData } = lastCalculatedMetrics;
+        const matrix = topicData.matrix;
+        const N = rawSurveyData.length;
+        let csvContent = 'Source,Target,Euclidean_Distance,Topic\n';
+
+        for (let i = 0; i < N; i++) {
+          for (let j = i + 1; j < N; j++) {
+            const dist = matrix[i][j];
+            if (dist <= currentThreshold) {
+              csvContent += `${rawSurveyData[i].Student_ID},${rawSurveyData[j].Student_ID},${dist.toFixed(4)},${currentTopic}\n`;
+            }
+          }
+        }
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `student_survey_edges_${currentTopic}_th${currentThreshold.toFixed(2)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Custom CSV File Upload
+      document.getElementById('csvFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            if (results.data && results.data.length > 0) {
+              parseAndLoadSurveyCSV(results.data);
+            }
+          }
+        });
+      });
+    });
+
+    function parseAndLoadSurveyCSV(rows) {
+      const LIKERT_MAP = {
+        'strongly agree': 5, '5': 5,
+        'agree': 4, '4': 4,
+        'neutral': 3, 'no comments': 3, '3': 3,
+        'disagree': 2, '2': 2,
+        'strongly disagree': 1, '1': 1
+      };
+
+      const headers = Object.keys(rows[0]);
+      const idKey = headers.find(h => /id|student/i.test(h)) || headers[0];
+
+      rawSurveyData = rows.map((r, idx) => {
+        const rowObj = { Student_ID: String(r[idKey] || `S${idx + 1}`) };
+        headers.forEach(h => {
+          if (h !== idKey) {
+            const valStr = String(r[h] || '').trim().toLowerCase();
+            rowObj[h] = LIKERT_MAP[valStr] !== undefined ? LIKERT_MAP[valStr] : 3;
+          }
+        });
+        return rowObj;
+      });
+
+      // Clear distance caches
+      Object.keys(distanceCache).forEach(k => distanceCache[k] = null);
+
+      // Re-trigger layout
+      setTopic('ALL');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+threshold,edges,isolates,n_communities,substantive_communities,modularity
+0.3,328,3,7,4,0.2522
+0.35,189,12,17,5,0.3222
+0.4,92,17,24,7,0.3801
+0.45,43,26,35,9,0.5154
+0.5,13,42,49,7,0.7008

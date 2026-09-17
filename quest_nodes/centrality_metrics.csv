@@ -1,0 +1,61 @@
+code,domain,text,degree,degree_centrality,betweenness,n_neighbors,pct_cross_domain,community
+T01,T,Artificial Intelligence will improve society more than it will create problems.,0,0.0,0.0,0,,0
+T02,T,Generative AI tools should be allowed as learning aids in higher education.,1,0.0169,0.0,1,1.0,16
+T03,T,Students should disclose the use of AI in assignments and reports.,0,0.0,0.0,0,,2
+T04,T,Every engineering student should receive formal education in AI.,0,0.0,0.0,0,,3
+T05,T,Artificial Intelligence will significantly accelerate scientific discovery.,0,0.0,0.0,0,,4
+T06,T,Most repetitive jobs will eventually be replaced by intelligent automation.,0,0.0,0.0,0,,5
+T07,T,Robots should replace humans in hazardous occupations whenever possible.,0,0.0,0.0,0,,6
+T08,T,AI-assisted diagnosis should become routine in healthcare.,0,0.0,0.0,0,,7
+T09,T,Autonomous vehicles will ultimately make transportation safer.,0,0.0,0.0,0,,8
+T10,T,Protection of personal data is more important than technological convenience.,2,0.0339,0.0228,2,0.5,9
+T11,T,Technology companies should explain how recommendation algorithms work.,1,0.0169,0.0,1,1.0,10
+T12,T,Governments should introduce stricter regulations for Artificial Intelligence.,3,0.0508,0.066,3,0.333,9
+T13,T,Cybersecurity deserves greater investment than the development of new digital technologies.,1,0.0169,0.0,1,0.0,9
+T14,T,Social media algorithms contribute to opinion polarization.,0,0.0,0.0,0,,12
+T15,T,Society will increasingly depend on AI-assisted decision making.,0,0.0,0.0,0,,13
+E01,E,Project-based learning develops deeper understanding than examination-oriented learning.,0,0.0,0.0,0,,14
+E02,E,Traditional written examinations accurately measure a student's knowledge.,0,0.0,0.0,0,,15
+E03,E,Class attendance should be compulsory for all courses.,1,0.0169,0.0,1,0.0,16
+E04,E,High-quality online learning can effectively complement classroom teaching.,0,0.0,0.0,0,,17
+E05,E,Students should be encouraged to take courses outside their primary discipline.,1,0.0169,0.0,1,0.0,18
+E06,E,Every undergraduate student should participate in at least one research project.,1,0.0169,0.0,1,0.0,18
+E07,E,"Publishing research before graduation should be encouraged, but not mandatory.",5,0.0847,0.0713,5,0.6,16
+E08,E,Maintaining academic honesty is more important than obtaining high grades.,0,0.0,0.0,0,,19
+E09,E,Collaborative learning is generally more effective than individual learning.,0,0.0,0.0,0,,20
+E10,E,Universities should prioritize innovation and problem-solving over rote learning.,3,0.0508,0.024,3,0.0,16
+E11,E,University curricula should be updated more frequently to match emerging technologies.,4,0.0678,0.0041,4,0.75,23
+E12,E,Artificial intelligence should be integrated into teaching and personalized learning.,3,0.0508,0.0245,3,0.333,16
+E13,E,Universities should invest more resources in research than in expanding infrastructure.,0,0.0,0.0,0,,22
+E14,E,Strong collaborations between universities and industry improve student education.,2,0.0339,0.0035,2,0.0,16
+E15,E,Continuous learning and skill development are essential throughout one's career.,6,0.1017,0.0432,6,0.5,16
+S01,S,Every individual has a responsibility to contribute positively to society.,2,0.0339,0.0,2,0.0,1
+S02,S,Universities should encourage students to participate in community service activities.,3,0.0508,0.0146,3,0.333,1
+S03,S,New technologies should be evaluated for their societal impact before widespread deployment.,3,0.0508,0.0076,3,0.0,1
+S04,S,Technology companies should be accountable for unethical use of their platforms.,2,0.0339,0.0006,2,0.0,1
+S05,S,Individuals should have greater control over how their personal data are collected and used.,1,0.0169,0.0,1,1.0,9
+S06,S,"Combating online misinformation requires shared responsibility among users, platforms, and governments.",5,0.0847,0.0058,5,0.8,10
+S07,S,Equal opportunities should be prioritized regardless of a person's background.,3,0.0508,0.0234,3,0.667,10
+S08,S,Diverse teams generally make better decisions than homogeneous teams.,0,0.0,0.0,0,,11
+S09,S,Universities should promote an inclusive environment where different viewpoints can be discussed respectfully.,12,0.2034,0.0842,12,0.417,10
+S10,S,Scientific evidence should play an important role in public policy decisions.,2,0.0339,0.0228,2,0.5,21
+S11,S,People should be free to express differing opinions as long as they do not promote harm or discrimination.,5,0.0847,0.0088,5,0.8,23
+S12,S,Young people should actively participate in addressing societal challenges.,1,0.0169,0.0,1,0.0,21
+S13,S,Critical evaluation of online information should be taught as a core educational skill.,5,0.0847,0.0859,5,0.6,10
+S14,S,Leaders should prioritize ethical decision-making even when it reduces short-term gains.,8,0.1356,0.0608,8,0.5,10
+S15,S,Building public trust is essential for responsible adoption of emerging technologies.,5,0.0847,0.0035,5,0.4,10
+V01,V,Climate change requires immediate global action.,2,0.0339,0.0105,2,0.0,16
+V02,V,Governments should prioritize investment in renewable energy over fossil fuels.,2,0.0339,0.0029,2,0.5,16
+V03,V,Individuals should actively reduce their personal energy consumption.,6,0.1017,0.0193,6,0.333,10
+V04,V,Public transportation and non-motorized transport should be promoted even if they require additional public investment.,3,0.0508,0.0,3,0.0,10
+V05,V,Single-use plastics should be significantly restricted.,4,0.0678,0.0,4,0.0,23
+V06,V,"Water conservation should be a priority in households, institutions, and industries.",7,0.1186,0.0094,7,0.143,23
+V07,V,Protecting biodiversity is essential for long-term human well-being.,13,0.2203,0.083,13,0.308,23
+V08,V,Universities should adopt environmentally sustainable campus practices even if implementation costs increase.,8,0.1356,0.0444,8,0.25,10
+V09,V,"Products should be designed to encourage reuse, repair, and recycling.",7,0.1186,0.0158,7,0.429,23
+V10,V,Consumers should consider environmental impact when purchasing products.,9,0.1525,0.0725,9,0.556,10
+V11,V,Technological innovation is essential for addressing environmental challenges.,2,0.0339,0.0,2,0.5,23
+V12,V,Environmental sustainability should be integrated into higher education curricula.,10,0.1695,0.0251,10,0.3,10
+V13,V,Companies should be held accountable for the environmental impacts of their activities.,6,0.1017,0.0421,6,0.167,23
+V14,V,International cooperation is necessary to effectively address environmental challenges.,7,0.1186,0.0105,7,0.286,23
+V15,V,Current generations have a responsibility to protect natural resources for future generations.,7,0.1186,0.0544,7,0.286,23
